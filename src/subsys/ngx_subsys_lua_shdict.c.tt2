@@ -2749,7 +2749,7 @@ ngx_[% subsys %]_lua_ffi_shdict_incr(ngx_shm_zone_t *zone, u_char *key,
     num += *value;
 
     ngx_memcpy(p, (double *) &num, sizeof(double));
-    
+
     if (exptime > 0) {
         dd("setting expire time to %d", exptime);
 
