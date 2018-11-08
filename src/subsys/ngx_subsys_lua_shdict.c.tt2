@@ -1294,8 +1294,8 @@ ngx_[% subsys %]_lua_shdict_incr(lua_State *L)
 
     n = lua_gettop(L);
 
-    if (n != 3 && n != 4) {
-        return luaL_error(L, "expecting 3 or 4 arguments, but only seen %d", n);
+    if (n != 3 && n != 4 && n != 5) {
+        return luaL_error(L, "expecting 3-5 arguments, but only seen %d", n);
     }
 
     if (lua_type(L, 1) != LUA_TTABLE) {
@@ -1333,8 +1333,8 @@ ngx_[% subsys %]_lua_shdict_incr(lua_State *L)
 
     value = luaL_checknumber(L, 3);
 
-    if (n == 4) {
-        init = luaL_checknumber(L, 4);
+    if (n == 5) {
+        init = luaL_checknumber(L, 5);
     }
 
     dd("looking up key %.*s in shared dict %.*s", (int) key.len, key.data,
@@ -2657,7 +2657,7 @@ ngx_[% subsys %]_lua_ffi_shdict_get(ngx_shm_zone_t *zone, u_char *key,
 
 int
 ngx_[% subsys %]_lua_ffi_shdict_incr(ngx_shm_zone_t *zone, u_char *key,
-    size_t key_len, double *value, char **err, int has_init, double init,
+    size_t key_len, double *value, int exptime, char **err, int has_init, double init,
     long init_ttl, int *forcible)
 {
     int                          i, n;
@@ -2667,6 +2667,7 @@ ngx_[% subsys %]_lua_ffi_shdict_incr(ngx_shm_zone_t *zone, u_char *key,
     double                       num;
     ngx_rbtree_node_t           *node;
     u_char                      *p;
+	ngx_time_t                  *tp;
     ngx_queue_t                 *queue, *q;
 
     ngx_[% subsys %]_lua_shdict_ctx_t   *ctx;
@@ -2748,6 +2749,17 @@ ngx_[% subsys %]_lua_ffi_shdict_incr(ngx_shm_zone_t *zone, u_char *key,
     num += *value;
 
     ngx_memcpy(p, (double *) &num, sizeof(double));
+	
+	if (exptime > 0) {
+        dd("setting expire time to %d", exptime);
+
+        tp = ngx_timeofday();
+        sd->expires = (uint64_t)tp->sec * 1000 + tp->msec
+            + (uint64_t)(exptime * 1000);
+    } else if (exptime == 0) {
+        dd("setting key to never expire");
+        sd->expires = 0;
+    }
 
     ngx_shmtx_unlock(&ctx->shpool->mutex);
 
