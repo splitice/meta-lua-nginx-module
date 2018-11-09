@@ -2308,7 +2308,7 @@ ngx_[% subsys%]_lua_req_socket(lua_State *L)
                   "unexpected connection type: %d", r->connection->type);
 [% END %]
 
-    ngx_stream_lua_assert(0);
+    ngx_[% subsys%]_lua_assert(0);
 
     return luaL_error(L, "unexpected connection type");
 }
